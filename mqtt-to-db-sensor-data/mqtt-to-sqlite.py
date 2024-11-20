@@ -55,7 +55,7 @@ def on_message(client, userdata, msg):
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO sensor_data (topic, time_stamp, temperature, humidity) VALUES (?, ?, ?)",
+            "INSERT INTO sensor_data (topic, time_stamp, temperature, humidity) VALUES (?, ?, ?, ?)",
             (topic, timestamp, temperature, humidity)
         )
         conn.commit()
