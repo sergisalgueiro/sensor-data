@@ -1,8 +1,17 @@
 import paho.mqtt.client as mqtt
 import sqlite3
 from datetime import datetime
+from dotenv import load_dotenv
 import json
 import os
+
+# Load environment variables
+load_dotenv()
+
+MQTT_HOST = os.getenv("MQTT_HOST")
+MQTT_PORT = int(os.getenv("MQTT_PORT"))
+MQTT_USER = os.getenv("MQTT_USER")
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 
 # SQLite setup
 DB_FILE = "sensor_data.db"
@@ -23,11 +32,8 @@ def initialize_db():
 # Initialize the database
 initialize_db()
 
-# MQTT setup
-MQTT_BROKER = "192.168.1.167"  # Replace with your broker's IP
-MQTT_PORT = 1883
 # Subscribe to all sensor topics temp_hum_sensor_room, temp_hum_sensor_living, temp_hum_sensor_terrace
-MQTT_TOPICS = [("temp_hum_sensor_#", 0)]
+MQTT_TOPICS = [("temp_hum_sensor_room", 0), ("temp_hum_sensor_living", 0), ("temp_hum_sensor_terrace", 0)]
 
 def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT broker with result code " + str(rc))
@@ -64,5 +70,6 @@ mqtt_client = mqtt.Client()
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+mqtt_client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+mqtt_client.connect(MQTT_HOST, MQTT_PORT, 60)
 mqtt_client.loop_forever()
