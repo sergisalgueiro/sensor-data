@@ -3,7 +3,7 @@ Description=MQTT to DB Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/sensor-data/mqtt-to-db-sensor-data/mqtt_to_db.py
+ExecStart=/usr/bin/python3 /home/pi/sensor-data/mqtt-to-db-sensor-data/mqtt-to-db.py
 Restart=always
 User=pi
 
