@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     topic TEXT NOT NULL,
     time_stamp INTEGER NOT NULL,
     temperature REAL NOT NULL,
-    humidity REAL NOT NULL,
+    humidity REAL NOT NULL
 );
