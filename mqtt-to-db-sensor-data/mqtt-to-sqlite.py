@@ -24,10 +24,10 @@ def initialize_db():
 initialize_db()
 
 # MQTT setup
-MQTT_BROKER = "localhost"  # Replace with your broker's IP
+MQTT_BROKER = "192.168.1.167"  # Replace with your broker's IP
 MQTT_PORT = 1883
 # Subscribe to all sensor topics temp_hum_sensor_room, temp_hum_sensor_living, temp_hum_sensor_terrace
-MQTT_TOPICS = [("temp_hum_sensor_/#", 0)]  
+MQTT_TOPICS = [("temp_hum_sensor_#", 0)]
 
 def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT broker with result code " + str(rc))
@@ -35,25 +35,26 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     try:
-        # Decode message payload
+        # Decode message payload with the format: epoch,temperature,humidity
         payload = msg.payload.decode()
-        data = json.loads(payload)
+        data = payload.split(",")
 
         # Extract data and write to SQLite
         topic = msg.topic
-        timestamp = data.get("timestamp", datetime.utcnow().isoformat())
-        value = float(data.get("value", 0))
+        timestamp = int(data[0])
+        temperature = float(data[1])
+        humidity = float(data[2])
 
         # Connect to SQLite and insert data
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO sensor_data (topic, timestamp, value) VALUES (?, ?, ?)",
-            (topic, timestamp, value)
+            "INSERT INTO sensor_data (topic, time_stamp, temperature, humidity) VALUES (?, ?, ?)",
+            (topic, timestamp, temperature, humidity)
         )
         conn.commit()
         conn.close()
-        print(f"Stored in DB: {topic}, {timestamp}, {value}")
+        print(f"Stored in DB: {topic}, {timestamp}, {temperature}, {humidity}")
 
     except Exception as e:
         print(f"Error processing message: {e}")
