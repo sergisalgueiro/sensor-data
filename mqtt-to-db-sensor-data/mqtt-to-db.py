@@ -1,10 +1,11 @@
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-import DatabaseManager
-import MQTTClient
+from DatabaseManager import DatabaseManager
+from MQTTClient import MQTTClient
 
 if __name__ == "__main__":
+    load_dotenv()
     # Configuration
     MQTT_HOST = os.getenv("MQTT_HOST")
     MQTT_PORT = int(os.getenv("MQTT_PORT"))
