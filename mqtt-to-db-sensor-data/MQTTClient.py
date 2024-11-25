@@ -13,6 +13,7 @@ class MQTTClient:
         # Set callbacks
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+        self.client.on_disconnect = self.on_disconnect
 
     def connect_and_start(self):
         self.client.username_pw_set(self.user, self.password)
@@ -22,6 +23,9 @@ class MQTTClient:
     def on_connect(self, client, userdata, flags, rc):
         print("Connected to MQTT broker with result code " + str(rc))
         client.subscribe(self.topics)
+    
+    def on_disconnect(self, client, userdata, rc):
+        print("Disconnected from MQTT broker with result code " + str(rc))
 
     def on_message(self, client, userdata, msg):
         try:
