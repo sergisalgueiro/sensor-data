@@ -1,11 +1,14 @@
 [Unit]
 Description=MQTT to DB Service
-After=network.target
+# After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 ExecStart=/usr/bin/python3 /home/pi/sensor-data/mqtt-to-db-sensor-data/mqtt-to-db.py
 WorkingDirectory=/home/pi/sensor-data/mqtt-to-db-sensor-data
 Restart=always
+RestartSec=15s
 User=pi
 Group=pi
 
