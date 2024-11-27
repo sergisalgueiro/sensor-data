@@ -1,4 +1,4 @@
-import dotenv
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 import redis
 import os
