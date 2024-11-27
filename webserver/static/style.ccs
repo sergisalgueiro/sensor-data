@@ -1,36 +1,93 @@
+/* Global Styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f4f8;
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    color: #333;
 }
 
-h1 {
+/* Header Styles */
+header {
+    background-color: #4caf50;
+    color: white;
+    padding: 20px 10px;
     text-align: center;
-    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+/* Main Content */
+main {
+    padding: 20px;
 }
 
 .sensor-data {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 20px;
 }
 
-.sensor {
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 10px;
-    padding: 15px;
+.sensor-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
     width: 300px;
-    text-align: center;
+    transition: transform 0.2s;
 }
 
-.sensor h3 {
+.sensor-card:hover {
+    transform: scale(1.05);
+}
+
+.sensor-header {
+    background-color: #4caf50;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    gap: 10px;
+}
+
+.sensor-header img {
+    width: 40px;
+    height: 40px;
+}
+
+.sensor-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    flex-grow: 1;
+}
+
+.sensor-body {
+    padding: 15px;
     color: #555;
 }
 
-.sensor p {
-    color: #777;
+.sensor-body p {
+    margin: 10px 0;
+    font-size: 1rem;
+}
+
+.sensor-body strong {
+    color: #333;
+}
+
+/* Footer Styles */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #4caf50;
+    color: white;
+    font-size: 0.9rem;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
 }
