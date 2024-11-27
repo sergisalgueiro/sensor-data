@@ -15,9 +15,9 @@ redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 @app.route('/')
 def index():
-    # Fetch all keys (topics) and their latest values
+    # Fetch all keys (topics) matching temp_hum_sensor_* and their latest values
     sensor_data = {}
-    for key in redis_client.keys():
+    for key in redis_client.keys("temp_hum_sensor_*"):
         sensor_data[key.decode()] = redis_client.get(key).decode()
     return jsonify(sensor_data)
 
