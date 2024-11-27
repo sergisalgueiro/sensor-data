@@ -5,6 +5,9 @@ import os
 from DatabaseManager import DatabaseManager
 from MQTTClient import MQTTClient
 
+# Get file directory
+file_dir = os.path.dirname(os.path.abspath(__file__))
+
 load_dotenv()
 # Configuration
 MQTT_HOST = os.getenv("MQTT_HOST")
@@ -13,8 +16,8 @@ MQTT_USER = os.getenv("MQTT_USER")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT")
-DB_FILE = "sensor_data.db"
-SCHEMA_FILE = "schema.sql"
+DB_FILE = file_dir + "sensor_data.db"
+SCHEMA_FILE = file_dir + "schema.sql"
 MQTT_TOPICS = [("temp_hum_sensor_room", 0), ("temp_hum_sensor_living", 0), ("temp_hum_sensor_terrace", 0)]
 
 if __name__ == "__main__":
