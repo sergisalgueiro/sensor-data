@@ -23,26 +23,23 @@ def format_data():
     """
     formatted_data = []
     for key in redis_client.keys("temp_hum_sensor_*"):
-        # Parse the key
-        key_str = key.decode()  # Redis keys are bytes; decode to string
-        epoch, temp, hum = key_str.split(',')
+        # Fetch the value from Redis
+        value_str = redis_client.get(key).decode()  # Decode bytes to string
+        epoch, temperature, humidity = value_str.split(',')
 
         # Convert epoch time to human-readable time with timezone
         timestamp = datetime.fromtimestamp(int(epoch), tz=pytz.utc)
         local_time = timestamp.astimezone(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
 
-        # Fetch sensor values
-        value = redis_client.get(key).decode()
+        # sensor is the key without the prefix
+        sensor = key.decode().split("_")[-1]
 
-        # Prepare display values with units
-        temp_data = f"{temp.capitalize()}: {value.split(',')[0]}°C"
-        hum_data = f"{hum.capitalize()}: {value.split(',')[1]}%"
-
-        # Append to formatted data
+        # Format the data with units
         formatted_data.append({
+            "sensor": sensor.capitalize(),
             "time": local_time,
-            "sensor1": temp_data,
-            "sensor2": hum_data,
+            "temperature": f"{temperature} °C",
+            "humidity": f"{humidity} %"
         })
 
     return formatted_data
