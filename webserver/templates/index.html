@@ -11,7 +11,8 @@
     <div class="sensor-data">
         {% for data in sensor_data %}
             <div class="sensor">
-                <h3>Timestamp: {{ data.time }}</h3>
+                <h3> {{ data.sensor }}</h3>
+                <p>{{ data.time }}</p>
                 <p>Temperature: {{ data.temperature }}</p>
                 <p>Humidity: {{ data.humidity }}</p>
             </div>
