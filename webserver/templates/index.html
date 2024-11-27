@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Sensor Data Dashboard</h1>
+    <div class="sensor-data">
+        {% for sensor, value in sensor_data.items() %}
+            <div class="sensor">
+                <h2>{{ sensor }}</h2>
+                <p>Latest Value: {{ value }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
