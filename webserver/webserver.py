@@ -28,7 +28,7 @@ def format_data():
         epoch, temperature, humidity = value_str.split(',')
 
         # Convert epoch time to human-readable time with timezone
-        timestamp = datetime.fromtimestamp(int(epoch), tz=pytz.utc)
+        timestamp = datetime.datetime.fromtimestamp(int(epoch), tz=pytz.utc)
         local_time = timestamp.astimezone(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
 
         # sensor is the key without the prefix
