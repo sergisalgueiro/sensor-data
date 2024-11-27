@@ -6,7 +6,7 @@ from DatabaseManager import DatabaseManager
 from MQTTClient import MQTTClient
 
 # Get file directory
-file_dir = os.path.dirname(os.path.abspath(__file__))
+file_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 
 load_dotenv()
 # Configuration
