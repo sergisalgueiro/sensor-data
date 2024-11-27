@@ -7,12 +7,13 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Sensor Data Dashboard</h1>
+    <h1>Sensor Dashboard</h1>
     <div class="sensor-data">
-        {% for sensor, value in sensor_data.items() %}
+        {% for data in sensor_data %}
             <div class="sensor">
-                <h2>{{ sensor }}</h2>
-                <p>Latest Value: {{ value }}</p>
+                <h3>Timestamp: {{ data.time }}</h3>
+                <p>{{ data.temp }}</p>
+                <p>{{ data.hum }}</p>
             </div>
         {% endfor %}
     </div>
