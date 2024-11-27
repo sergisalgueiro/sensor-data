@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 
 class MQTTClient:
-    def __init__(self, host, port, user, password, topics, db_manager):
+    def __init__(self, host, port, user, password, topics, db_manager, redis_client):
         self.client = mqtt.Client()
         self.host = host
         self.port = port
@@ -9,6 +9,7 @@ class MQTTClient:
         self.password = password
         self.topics = topics
         self.db_manager = db_manager
+        self.redis_client = redis_client
 
         # Set callbacks
         self.client.on_connect = self.on_connect
@@ -38,6 +39,9 @@ class MQTTClient:
 
             # Store in database
             self.db_manager.insert_sensor_data(topic, timestamp, temperature, humidity)
+
+            # Store in Redis
+            self.redis_client.set(topic, payload)
 
         except Exception as e:
             print(f"Error processing message: {e}")
