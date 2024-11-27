@@ -1,6 +1,5 @@
 [Unit]
 Description=MQTT to DB Service
-# After=network.target
 Wants=network-online.target
 After=network-online.target
 
