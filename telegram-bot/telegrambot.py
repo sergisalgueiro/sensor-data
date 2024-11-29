@@ -47,8 +47,9 @@ async def show_last_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     chat_id = update.message.chat_id  # Get the chat ID of the user
     
     # Send all sensors in one only message to the user
+    message = ""
     for data in format_last_data():
-        message = f"Sensor: {data['sensor']}\n" \
+        message += f"Sensor: {data['sensor']}\n" \
                     f"Time: {data['time']}\n" \
                     f"Temperature: {data['temperature']}\n" \
                     f"Humidity: {data['humidity']}\n"
