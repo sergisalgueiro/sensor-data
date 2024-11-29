@@ -1,4 +1,5 @@
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import ContextTypes, CommandHandler, ApplicationBuilder
+from telegram import Update
 from dotenv import load_dotenv
 import os
 import redis
@@ -37,11 +38,11 @@ def format_last_data():
     
     return formatted_data
 
-def start(update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a welcome message when the bot starts"""
-    update.message.reply_text("Hello! Send '/now'.")
+    await update.message.reply_text("Hello! Send '/now'.")
 
-def show_last_data(update, context):
+async def show_last_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show the last data from the Redis"""
     chat_id = update.message.chat_id  # Get the chat ID of the user
     
@@ -53,20 +54,18 @@ def show_last_data(update, context):
                     f"Humidity: {data['humidity']}\n"
         if data != format_last_data()[-1]:
             message += "\n"
-    update.message.reply_text(message)
+    await update.message.reply_text(message)
 
 def main():
     """Start the bot and handle commands"""
-    updater = Updater(TELEGRAM_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     # Add handlers for the commands
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("now", show_last_data))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("now", show_last_data))
 
     # Start the bot
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
