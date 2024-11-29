@@ -1,54 +1,59 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
 from telegram.ext import Updater, CommandHandler
 from dotenv import load_dotenv
 import os
+import redis
+import datetime
+import pytz
 
 load_dotenv()
 
-# Telegram Bot Token
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-GRAFANA_IP = os.getenv('GRAFANA_IP')
-GRAFANA_PORT = os.getenv('GRAFANA_PORT')
-DASHBOARD_UID = os.getenv('DASHBOARD_UID')
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = os.getenv("REDIS_PORT")
+LOCAL_TIMEZONE = pytz.timezone('Europe/Madrid')  # Adjust to your timezone
 
-# Setup Selenium for headless browsing
-options = Options()
-options.add_argument('--headless')  # Run headlessly (no GUI)
-options.add_argument('--disable-gpu')  # Disable GPU acceleration for Raspberry Pi
-options.add_argument('--no-sandbox')  # Fixes certain issues on Raspberry Pi
+# Configure Redis
+redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-# Initialize the WebDriver (Chromium with headless options)
-driver = webdriver.Chrome(options=options)
+def format_last_data():
+    formatted_data = []
+    for key in redis_client.keys("temp_hum_sensor_*"):
+        # Fetch the value from Redis
+        value_str = redis_client.get(key).decode()
+        epoch, temperature, humidity = value_str.split(',')
+        sensor = key.decode().split("_")[-1]
 
-# Grafana Dashboard URL
-GRAFANA_URL = 'http://' + GRAFANA_IP + ':' + GRAFANA_PORT + '/d/' + DASHBOARD_UID
+        # Convert epoch time to human-readable time with timezone
+        timestamp = datetime.datetime.fromtimestamp(int(epoch), tz=pytz.utc)
+        local_time = timestamp.astimezone(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')
 
-def capture_dashboard():
-    # Open Grafana dashboard in browser
-    driver.get(GRAFANA_URL)
-
-    # Wait for the page to load
-    time.sleep(5)
-
-    # Save screenshot
-    screenshot_path = 'grafana_dashboard.png'
-    driver.save_screenshot(screenshot_path)
-    return screenshot_path
+        # Format the data with units
+        formatted_data.append({
+            "sensor": sensor.capitalize(),
+            "time": local_time,
+            "temperature": f"{temperature} °C",
+            "humidity": f"{humidity} %"
+        })
+    
+    return formatted_data
 
 def start(update, context):
     """Send a welcome message when the bot starts"""
-    update.message.reply_text("Hello! Send '/show_dashboard' to get the Grafana dashboard image.")
+    update.message.reply_text("Hello! Send '/now'.")
 
-def show_dashboard(update, context):
-    """Capture and send the Grafana dashboard image to the user"""
+def show_last_data(update, context):
+    """Show the last data from the Redis"""
     chat_id = update.message.chat_id  # Get the chat ID of the user
-    image_path = capture_dashboard()  # Capture the dashboard screenshot
     
-    # Send the image to the user
-    context.bot.send_photo(chat_id=chat_id, photo=open(image_path, 'rb'))
-    update.message.reply_text("Here is your Grafana dashboard image!")
+    # Send all sensors in one only message to the user
+    for data in format_last_data():
+        message = f"Sensor: {data['sensor']}\n" \
+                    f"Time: {data['time']}\n" \
+                    f"Temperature: {data['temperature']}\n" \
+                    f"Humidity: {data['humidity']}\n"
+        if data != format_last_data()[-1]:
+            message += "\n"
+    update.message.reply_text(message)
 
 def main():
     """Start the bot and handle commands"""
@@ -57,14 +62,11 @@ def main():
 
     # Add handlers for the commands
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("show_dashboard", show_dashboard))
+    dp.add_handler(CommandHandler("now", show_last_data))
 
     # Start the bot
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
-    try:
-        main()
-    finally:
-        driver.quit()  # Close the Selenium driver when the bot stops
+    main()
