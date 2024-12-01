@@ -101,10 +101,10 @@ def main():
     # Add handlers for the commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("now", show_last_data))
-    app.add_handler(CommandHandler("room_on", show_last_data))
-    app.add_handler(CommandHandler("room_off", show_last_data))
-    app.add_handler(CommandHandler("living_on", show_last_data))
-    app.add_handler(CommandHandler("living_off", show_last_data))
+    app.add_handler(CommandHandler("room_on", room_on))
+    app.add_handler(CommandHandler("room_off", room_off))
+    app.add_handler(CommandHandler("living_on", living_on))
+    app.add_handler(CommandHandler("living_off", living_off))
     app.add_error_handler(error)
 
     # Start the bot
