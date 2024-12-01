@@ -4,6 +4,7 @@ Wants=network-online.target
 After=network-online.target redis.service
 
 [Service]
+Environment="PYTHONPATH=/home/pi/sensor-data"
 ExecStart=/usr/bin/python3 /home/pi/sensor-data/mqtt-to-db-sensor-data/mqtt-to-db.py
 WorkingDirectory=/home/pi/sensor-data/mqtt-to-db-sensor-data
 Restart=always
