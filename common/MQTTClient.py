@@ -15,7 +15,8 @@ class MQTTClient:
 
         self._user_on_connect = None
         self.client.on_disconnect = self.on_disconnect
-        self.client.on_connect = self._composite_on_connect       
+        self.client.on_connect = self._composite_on_connect
+        self.client.on_publish = self.on_publish       
 
     def connect_and_start(self):
         self.client.username_pw_set(self.user, self.password)
@@ -35,3 +36,11 @@ class MQTTClient:
 
     def set_on_message_callback(self, callback):
         self.client.on_message = callback
+
+    def publish(self, topic, payload):
+        result = self.client.publish(topic, payload)
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            logger.debug(f"Published message to topic {topic}")
+
+    def on_publish(self, client, userdata, mid):
+        logger.debug(f"Message {mid} published")
