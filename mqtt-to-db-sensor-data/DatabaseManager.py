@@ -1,4 +1,10 @@
 import sqlite3
+import logging
+
+#  Setup logger
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 TEMP_THRESHOLD = 0.5
 HUM_THRESHOLD = 1.0
@@ -35,7 +41,7 @@ class DatabaseManager:
                     (topic, timestamp, temperature, humidity)
                 )
                 conn.commit()
-                print(f"Stored in DB: {topic}, {timestamp}, {temperature}, {humidity}")
+                logger.debug(f"Stored in DB: {topic}, {timestamp}, {temperature}, {humidity}")
             conn.close()
         except sqlite3.Error as e:
-            print(f"Database error: {e}")
+            logger.debug(f"Database error: {e}")
