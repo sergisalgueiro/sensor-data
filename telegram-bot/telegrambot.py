@@ -6,7 +6,7 @@ import redis
 import datetime
 import pytz
 import logging
-import common.MQTTClient as MQTTClient
+from common.MQTTClient import MQTTClient
 
 # Set up logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
