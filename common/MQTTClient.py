@@ -18,10 +18,9 @@ class MQTTClient:
         self.client.on_connect = self._composite_on_connect
         self.client.on_publish = self.on_publish       
 
-    def connect_and_start(self):
+    def connect(self):
         self.client.username_pw_set(self.user, self.password)
         self.client.connect(self.host, self.port, 60)
-        self.client.loop_forever()
 
     def _composite_on_connect(self, client, userdata, flags, rc):
         logger.debug("Connected to MQTT broker with result code " + str(rc))

@@ -52,4 +52,5 @@ if __name__ == "__main__":
     mqtt_client.set_on_message_callback(on_message)
 
     # Start the MQTT client
-    mqtt_client.connect_and_start()
+    mqtt_client.connect()
+    mqtt_client.client.loop_forever()

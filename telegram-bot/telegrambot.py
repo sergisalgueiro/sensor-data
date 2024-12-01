@@ -96,7 +96,8 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 def main():
     """Start the bot and handle commands"""
-    mqtt_client.connect_and_start()
+    mqtt_client.connect()
+    mqtt_client.client.loop_start()
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     # Add handlers for the commands
