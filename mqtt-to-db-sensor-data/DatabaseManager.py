@@ -44,4 +44,18 @@ class DatabaseManager:
                 logger.debug(f"Stored in DB: {topic}, {timestamp}, {temperature}, {humidity}")
             conn.close()
         except sqlite3.Error as e:
-            logger.debug(f"Database error: {e}")
+            logger.error(f"Database error: {e}")
+
+    def insert_sensor_failure(self, topic, timestamp):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO sensor_failure (topic, time_stamp) VALUES (?, ?)",
+                (topic, timestamp)
+            )
+            conn.commit()
+            conn.close()
+            logger.debug(f"Stored in DB: {topic}, {timestamp}")
+        except sqlite3.Error as e:
+            logger.error(f"Database error: {e}")

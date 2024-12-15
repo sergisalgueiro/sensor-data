@@ -5,3 +5,9 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     temperature REAL NOT NULL,
     humidity REAL NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS sensor_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    time_stamp INTEGER NOT NULL,
+    topic TEXT NOT NULL
+);

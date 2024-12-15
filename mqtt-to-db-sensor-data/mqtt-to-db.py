@@ -4,6 +4,11 @@ import redis
 import os
 from DatabaseManager import DatabaseManager
 from common.MQTTClient import MQTTClient
+import logging
+
+# Set up logger
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Get file directory
 file_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
@@ -33,14 +38,19 @@ def on_message(client, userdata, msg):
         temperature = float(data[1])
         humidity = float(data[2])
 
-        # Store in database
-        db_manager.insert_sensor_data(topic, timestamp, temperature, humidity)
-
         # Store in Redis
         redis_client.set(topic, payload)
 
+        # Check if the values are NaN
+        if temperature != temperature or humidity != humidity:
+            db_manager.insert_sensor_failure(topic, timestamp)
+            return
+
+        # Store in database
+        db_manager.insert_sensor_data(topic, timestamp, temperature, humidity)
+
     except Exception as e:
-        print(f"Error processing message: {e}")
+        logger.error(f"Error processing message: {e}")
 
 if __name__ == "__main__":
 
