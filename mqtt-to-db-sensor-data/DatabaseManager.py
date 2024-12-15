@@ -51,7 +51,7 @@ class DatabaseManager:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO sensor_failure (topic, time_stamp) VALUES (?, ?)",
+                "INSERT INTO sensor_failures (topic, time_stamp) VALUES (?, ?)",
                 (topic, timestamp)
             )
             conn.commit()
