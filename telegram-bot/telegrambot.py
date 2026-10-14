@@ -7,6 +7,7 @@ import datetime
 import pytz
 import logging
 from common.MQTTClient import MQTTClient
+from prometheus_client import start_http_server, Counter
 
 # Set up logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -23,6 +24,10 @@ MQTT_PORT = int(os.getenv("MQTT_PORT"))
 MQTT_USER = os.getenv("MQTT_USER")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 LOCAL_TIMEZONE = pytz.timezone('Europe/Madrid')  # Adjust to your timezone
+
+# Prometheus Metrics
+TELEGRAM_COMMANDS_TOTAL = Counter('telegram_commands_handled_total', 'Total Telegram bot commands handled', ['command'])
+TELEGRAM_ERRORS_TOTAL = Counter('telegram_errors_total', 'Total Telegram bot errors')
 
 # Configure Redis
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
@@ -54,10 +59,12 @@ def format_last_data():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a welcome message when the bot starts"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="start").inc()
     await update.message.reply_text("/now\n/room_on\n/room_off\n/living_on\n/living_off\n")
 
 async def show_last_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show the last data from the Redis"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="now").inc()
     chat_id = update.message.chat_id  # Get the chat ID of the user
     
     # Send all sensors in one only message to the user
@@ -73,30 +80,39 @@ async def show_last_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def room_on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message to turn on the room A/C"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="room_on").inc()
     mqtt_client.client.publish("room_ac", "on")
     await update.message.reply_text("Command sent to turn on Room A/C")
 
 async def room_off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message to turn off the room A/C"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="room_off").inc()
     mqtt_client.client.publish("room_ac", "off")
     await update.message.reply_text("Command sent to turn off Room A/C")
 
 async def living_on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message to turn on the living room A/C"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="living_on").inc()
     mqtt_client.client.publish("living_ac", "on")
     await update.message.reply_text("Command sent to turn on Living Room A/C")
 
 async def living_off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message to turn off the living room A/C"""
+    TELEGRAM_COMMANDS_TOTAL.labels(command="living_off").inc()
     mqtt_client.client.publish("living_ac", "off")
     await update.message.reply_text("Command sent to turn off Living Room A/C")
 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log Errors caused by Updates."""
+    TELEGRAM_ERRORS_TOTAL.inc()
     logger.error("Exception while handling an update:", exc_info=context.error)
 
 def main():
     """Start the bot and handle commands"""
+    METRICS_PORT = int(os.getenv("TELEGRAM_METRICS_PORT", 8002))
+    start_http_server(METRICS_PORT)
+    logger.info(f"Prometheus metrics exporter started on port {METRICS_PORT}")
+
     mqtt_client.connect()
     mqtt_client.client.loop_start()
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()

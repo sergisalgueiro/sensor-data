@@ -4,6 +4,7 @@ import redis
 import os
 import datetime
 import pytz
+from prometheus_flask_exporter import PrometheusMetrics
 
 load_dotenv()
 
@@ -13,6 +14,7 @@ REDIS_PORT = os.getenv("REDIS_PORT")
 LOCAL_TIMEZONE = pytz.timezone('Europe/Madrid')  # Adjust to your timezone
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 # Configure Redis
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
