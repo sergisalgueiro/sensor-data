@@ -5,31 +5,229 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
 </head>
 <body>
-    <header>
-        <h1>🌡️ Sensor Dashboard</h1>
-    </header>
-    <main>
-        <div class="sensor-data">
-            {% for data in sensor_data %}
-                <div class="sensor-card">
-                    <div class="sensor-header">
-                        <img src="/static/sensor-icon.png" alt="Sensor Icon">
-                        <h3>{{ data.sensor }}</h3>
+    <div class="noise"></div>
+
+    <div class="dashboard">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                    </svg>
+                    Sensor Dashboard
+                </h1>
+                <p class="subtitle">Real-time environment monitoring</p>
+            </div>
+            <div class="header-right">
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshNow()" title="Refresh now">
+                    <svg class="refresh-icon" id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                    <span id="refreshTimer">30</span>
+                </button>
+                <div class="status-badge {{ 'all-online' if online_count == total_count else 'partial' }}">
+                    <span class="status-dot"></span>
+                    <span>{{ online_count }}/{{ total_count }} online</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="sensor-grid" id="sensorGrid">
+                {% for data in sensor_data %}
+                <div class="sensor-card {{ 'card-offline' if not data.is_online }}" data-sensor="{{ data.sensor }}">
+                    <div class="card-status-bar {{ 'online' if data.is_online else 'offline' }}"></div>
+
+                    <div class="card-header">
+                        <div class="sensor-identity">
+                            <span class="sensor-icon">
+                                {% if data.sensor.lower() == 'room' %}🛏️
+                                {% elif data.sensor.lower() == 'living' %}🛋️
+                                {% elif data.sensor.lower() == 'terrace' %}☀️
+                                {% elif data.sensor.lower() == 'kitchen' %}🍳
+                                {% elif data.sensor.lower() == 'bathroom' %}🚿
+                                {% elif data.sensor.lower() == 'garage' %}🚗
+                                {% else %}📡
+                                {% endif %}
+                            </span>
+                            <div>
+                                <h3 class="sensor-name">{{ data.sensor }}</h3>
+                                <span class="sensor-status {{ 'online' if data.is_online else 'offline' }}">
+                                    <span class="status-indicator"></span>
+                                    {{ 'Online' if data.is_online else 'Offline' }}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="time-ago">{{ data.relative_time }}</span>
                     </div>
-                    <div class="sensor-body">
-                        <p><strong>🕒 Time:</strong> {{ data.time }}</p>
-                        <p><strong>🌡️ Temperature:</strong> {{ data.temperature }}</p>
-                        <p><strong>💧 Humidity:</strong> {{ data.humidity }}</p>
+
+                    <div class="card-body">
+                        <div class="reading temperature-reading">
+                            <div class="reading-value {{ data.temp_class }}">
+                                <span class="value" data-field="temperature">{{ data.temperature }}</span>
+                                {% if data.temp_value is not none %}
+                                <span class="unit">°C</span>
+                                {% endif %}
+                            </div>
+                            <span class="reading-label">Temperature</span>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div class="reading humidity-reading">
+                            <div class="humidity-gauge">
+                                <svg class="gauge-ring" viewBox="0 0 80 80">
+                                    <defs>
+                                        <linearGradient id="humGrad-{{ loop.index }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#06b6d4"/>
+                                            <stop offset="100%" stop-color="#3b82f6"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="gauge-bg" cx="40" cy="40" r="34"/>
+                                    <circle class="gauge-fill" cx="40" cy="40" r="34"
+                                        stroke="url(#humGrad-{{ loop.index }})"
+                                        stroke-dasharray="{{ (data.hum_value or 0) / 100 * 213.6 }} 213.6"
+                                        transform="rotate(-90 40 40)"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <span class="value" data-field="humidity">{{ data.humidity }}</span>
+                                    {% if data.hum_value is not none %}
+                                    <span class="gauge-unit">%</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="reading-label">Humidity</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span class="timestamp" data-field="time">{{ data.time }}</span>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    </main>
-    <footer>
-        <p>Powered by Flask & Redis | Raspberry Pi</p>
-    </footer>
+                {% endfor %}
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-tech">Raspberry Pi</span>
+                <span class="footer-dot">·</span>
+                <span class="footer-tech">Flask</span>
+                <span class="footer-dot">·</span>
+                <span class="footer-tech">Redis</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const REFRESH_INTERVAL = 30;
+        let countdown = REFRESH_INTERVAL;
+        let timerEl = document.getElementById('refreshTimer');
+        let refreshIcon = document.getElementById('refreshIcon');
+
+        // Countdown timer
+        setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                refreshData();
+                countdown = REFRESH_INTERVAL;
+            }
+            timerEl.textContent = countdown;
+        }, 1000);
+
+        function refreshNow() {
+            refreshData();
+            countdown = REFRESH_INTERVAL;
+        }
+
+        async function refreshData() {
+            refreshIcon.classList.add('spinning');
+            try {
+                const res = await fetch('/api/sensors');
+                const data = await res.json();
+                updateCards(data.sensors);
+                updateStatusBadge(data.online_count, data.total_count);
+            } catch (err) {
+                console.error('Refresh failed:', err);
+            } finally {
+                setTimeout(() => refreshIcon.classList.remove('spinning'), 600);
+            }
+        }
+
+        function updateCards(sensors) {
+            sensors.forEach(sensor => {
+                const card = document.querySelector(`[data-sensor="${sensor.sensor}"]`);
+                if (!card) return;
+
+                // Update values
+                const tempEl = card.querySelector('[data-field="temperature"]');
+                const humEl = card.querySelector('[data-field="humidity"]');
+                const timeEl = card.querySelector('[data-field="time"]');
+                const timeAgo = card.querySelector('.time-ago');
+                const statusBar = card.querySelector('.card-status-bar');
+                const statusBadge = card.querySelector('.sensor-status');
+                const statusIndicator = card.querySelector('.status-indicator');
+                const readingValue = card.querySelector('.reading-value');
+
+                if (tempEl) tempEl.textContent = sensor.temperature;
+                if (humEl) humEl.textContent = sensor.humidity;
+                if (timeEl) timeEl.textContent = sensor.time;
+                if (timeAgo) timeAgo.textContent = sensor.relative_time;
+
+                // Update status
+                card.classList.toggle('card-offline', !sensor.is_online);
+                if (statusBar) {
+                    statusBar.classList.toggle('online', sensor.is_online);
+                    statusBar.classList.toggle('offline', !sensor.is_online);
+                }
+                if (statusBadge) {
+                    statusBadge.classList.toggle('online', sensor.is_online);
+                    statusBadge.classList.toggle('offline', !sensor.is_online);
+                    statusBadge.innerHTML = `<span class="status-indicator"></span>${sensor.is_online ? 'Online' : 'Offline'}`;
+                }
+
+                // Update temperature class
+                if (readingValue) {
+                    readingValue.className = 'reading-value ' + sensor.temp_class;
+                }
+
+                // Update humidity gauge
+                const gaugeFill = card.querySelector('.gauge-fill');
+                if (gaugeFill && sensor.hum_value !== null) {
+                    const dashLen = (sensor.hum_value / 100) * 213.6;
+                    gaugeFill.setAttribute('stroke-dasharray', `${dashLen} 213.6`);
+                }
+
+                // Flash animation on update
+                card.classList.add('card-updated');
+                setTimeout(() => card.classList.remove('card-updated'), 500);
+            });
+        }
+
+        function updateStatusBadge(online, total) {
+            const badge = document.querySelector('.status-badge');
+            if (badge) {
+                badge.classList.toggle('all-online', online === total);
+                badge.classList.toggle('partial', online !== total);
+                badge.querySelector('span:last-child').textContent = `${online}/${total} online`;
+            }
+        }
+
+        // Stagger card entrance animations
+        document.querySelectorAll('.sensor-card').forEach((card, i) => {
+            card.style.animationDelay = `${i * 0.1}s`;
+        });
+    </script>
 </body>
 </html>
