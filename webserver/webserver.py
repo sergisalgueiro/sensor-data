@@ -21,7 +21,7 @@ metrics = PrometheusMetrics(app)
 # Configure Redis
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
-# Multi-language translations dictionary (Catalan default)
+# Multi-language translations dictionary (Catalan default, English secondary)
 TRANSLATIONS = {
     'ca': {
         'just_now': 'ara mateix',
@@ -91,6 +91,7 @@ def _temp_class(value):
 def format_data(lang='ca'):
     """
     Fetches and formats data from Redis for display. Default language is Catalan ('ca').
+    Sorts online sensors first, then by sensor name.
     """
     formatted_data = []
     now = datetime.datetime.now(tz=pytz.utc)
@@ -144,8 +145,8 @@ def format_data(lang='ca'):
             "is_online": is_online,
         })
 
-    # Sort alphabetically by sensor name
-    formatted_data.sort(key=lambda x: x['sensor'])
+    # Sort: online sensors first, then alphabetically
+    formatted_data.sort(key=lambda x: (not x['is_online'], x['sensor']))
     return formatted_data
 
 
@@ -155,10 +156,13 @@ def index():
     if lang not in TRANSLATIONS:
         lang = 'ca'
     sensor_data = format_data(lang=lang)
-    online_count = sum(1 for s in sensor_data if s['is_online'])
+    online_sensors = [s for s in sensor_data if s['is_online']]
+    offline_sensors = [s for s in sensor_data if not s['is_online']]
     return render_template('index.html',
                            sensor_data=sensor_data,
-                           online_count=online_count,
+                           online_sensors=online_sensors,
+                           offline_sensors=offline_sensors,
+                           online_count=len(online_sensors),
                            total_count=len(sensor_data),
                            current_lang=lang)
 
@@ -170,9 +174,10 @@ def api_sensors():
     if lang not in TRANSLATIONS:
         lang = 'ca'
     sensor_data = format_data(lang=lang)
+    online_count = sum(1 for s in sensor_data if s['is_online'])
     return jsonify({
         "sensors": sensor_data,
-        "online_count": sum(1 for s in sensor_data if s['is_online']),
+        "online_count": online_count,
         "total_count": len(sensor_data),
         "lang": lang
     })

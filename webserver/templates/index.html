@@ -44,84 +44,104 @@
             </div>
         </header>
 
-        <main class="main">
-            <div class="sensor-grid" id="sensorGrid">
-                {% for data in sensor_data %}
-                <div class="sensor-card {{ 'card-offline' if not data.is_online }}" data-sensor-id="{{ data.sensor_id }}" data-sensor="{{ data.sensor_id }}">
-                    <div class="card-status-bar {{ 'online' if data.is_online else 'offline' }}"></div>
+        {% macro render_sensor_card(data, unique_id) %}
+        <div class="sensor-card {{ 'card-offline' if not data.is_online }}" data-sensor-id="{{ data.sensor_id }}" data-sensor="{{ data.sensor_id }}">
+            <div class="card-status-bar {{ 'online' if data.is_online else 'offline' }}"></div>
 
-                    <div class="card-header">
-                        <div class="sensor-identity">
-                            <span class="sensor-icon">
-                                {% if data.sensor_id == 'room' %}🛏️
-                                {% elif data.sensor_id == 'living' %}🛋️
-                                {% elif data.sensor_id == 'terrace' %}☀️
-                                {% elif data.sensor_id == 'kitchen' %}🍳
-                                {% elif data.sensor_id == 'bathroom' %}🚿
-                                {% elif data.sensor_id == 'garage' %}🚗
-                                {% else %}📡
-                                {% endif %}
-                            </span>
-                            <div>
-                                <h3 class="sensor-name" data-field="sensorName">{{ data.sensor }}</h3>
-                                <span class="sensor-status {{ 'online' if data.is_online else 'offline' }}">
-                                    <span class="status-indicator"></span>
-                                    <span class="status-text">{{ 'En línia' if data.is_online else 'Fora de línia' }}</span>
-                                </span>
-                            </div>
-                        </div>
-                        <span class="time-ago">{{ data.relative_time }}</span>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="reading temperature-reading">
-                            <div class="reading-value {{ data.temp_class }}">
-                                <span class="value" data-field="temperature">{{ data.temperature }}</span>
-                                {% if data.temp_value is not none %}
-                                <span class="unit">°C</span>
-                                {% endif %}
-                            </div>
-                            <span class="reading-label label-temp">Temperatura</span>
-                        </div>
-
-                        <div class="divider"></div>
-
-                        <div class="reading humidity-reading">
-                            <div class="humidity-gauge">
-                                <svg class="gauge-ring" viewBox="0 0 80 80">
-                                    <defs>
-                                        <linearGradient id="humGrad-{{ loop.index }}" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stop-color="#06b6d4"/>
-                                            <stop offset="100%" stop-color="#3b82f6"/>
-                                        </linearGradient>
-                                    </defs>
-                                    <circle class="gauge-bg" cx="40" cy="40" r="34"/>
-                                    <circle class="gauge-fill" cx="40" cy="40" r="34"
-                                        stroke="url(#humGrad-{{ loop.index }})"
-                                        stroke-dasharray="{{ (data.hum_value or 0) / 100 * 213.6 }} 213.6"
-                                        transform="rotate(-90 40 40)"/>
-                                </svg>
-                                <div class="gauge-center">
-                                    <span class="value" data-field="humidity">{{ data.humidity }}</span>
-                                    {% if data.hum_value is not none %}
-                                    <span class="gauge-unit">%</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <span class="reading-label label-hum">Humitat</span>
-                        </div>
-                    </div>
-
-                    <div class="card-footer">
-                        <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span class="timestamp" data-field="time">{{ data.time }}</span>
+            <div class="card-header">
+                <div class="sensor-identity">
+                    <span class="sensor-icon">
+                        {% if data.sensor_id == 'room' %}🛏️
+                        {% elif data.sensor_id == 'living' %}🛋️
+                        {% elif data.sensor_id == 'terrace' %}☀️
+                        {% elif data.sensor_id == 'kitchen' %}🍳
+                        {% elif data.sensor_id == 'bathroom' %}🚿
+                        {% elif data.sensor_id == 'garage' %}🚗
+                        {% else %}📡
+                        {% endif %}
+                    </span>
+                    <div>
+                        <h3 class="sensor-name" data-field="sensorName">{{ data.sensor }}</h3>
+                        <span class="sensor-status {{ 'online' if data.is_online else 'offline' }}">
+                            <span class="status-indicator"></span>
+                            <span class="status-text">{{ 'En línia' if data.is_online else 'Fora de línia' }}</span>
+                        </span>
                     </div>
                 </div>
-                {% endfor %}
+                <span class="time-ago">{{ data.relative_time }}</span>
             </div>
+
+            <div class="card-body">
+                <div class="reading temperature-reading">
+                    <div class="reading-value {{ data.temp_class }}">
+                        <span class="value" data-field="temperature">{{ data.temperature }}</span>
+                        {% if data.temp_value is not none %}
+                        <span class="unit">°C</span>
+                        {% endif %}
+                    </div>
+                    <span class="reading-label label-temp">Temperatura</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="reading humidity-reading">
+                    <div class="humidity-gauge">
+                        <svg class="gauge-ring" viewBox="0 0 80 80">
+                            <defs>
+                                <linearGradient id="humGrad-{{ unique_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#06b6d4"/>
+                                    <stop offset="100%" stop-color="#3b82f6"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="gauge-bg" cx="40" cy="40" r="34"/>
+                            <circle class="gauge-fill" cx="40" cy="40" r="34"
+                                stroke="url(#humGrad-{{ unique_id }})"
+                                stroke-dasharray="{{ (data.hum_value or 0) / 100 * 213.6 }} 213.6"
+                                transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="gauge-center">
+                            <span class="value" data-field="humidity">{{ data.humidity }}</span>
+                            {% if data.hum_value is not none %}
+                            <span class="gauge-unit">%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="reading-label label-hum">Humitat</span>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span class="timestamp" data-field="time">{{ data.time }}</span>
+            </div>
+        </div>
+        {% endmacro %}
+
+        <main class="main">
+            <!-- Sensors actius (a dalt) -->
+            <section class="sensor-section" id="activeSection">
+                <div class="sensor-grid" id="onlineGrid">
+                    {% for data in online_sensors %}
+                        {{ render_sensor_card(data, 'on-' ~ loop.index) }}
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Sensors desconnectats (a sota) -->
+            <section class="sensor-section offline-section {{ 'hidden' if not offline_sensors }}" id="offlineSection">
+                <div class="section-header">
+                    <span class="section-dot"></span>
+                    <h2 class="section-title" id="offlineSectionTitle">Fora de línia</h2>
+                </div>
+                <div class="sensor-grid" id="offlineGrid">
+                    {% for data in offline_sensors %}
+                        {{ render_sensor_card(data, 'off-' ~ loop.index) }}
+                    {% endfor %}
+                </div>
+            </section>
         </main>
 
         <footer class="footer">
@@ -144,6 +164,7 @@
                 onlineText: "en línia",
                 statusOnline: "En línia",
                 statusOffline: "Fora de línia",
+                offlineHeader: "Fora de línia",
                 temperature: "Temperatura",
                 humidity: "Humitat",
                 refreshTitle: "Actualitzar ara"
@@ -155,6 +176,7 @@
                 onlineText: "online",
                 statusOnline: "Online",
                 statusOffline: "Offline",
+                offlineHeader: "Offline",
                 temperature: "Temperature",
                 humidity: "Humidity",
                 refreshTitle: "Refresh now"
@@ -176,6 +198,9 @@
             document.getElementById('titleText').textContent = t.title;
             document.getElementById('subtitleText').textContent = t.subtitle;
             document.getElementById('refreshBtn').title = t.refreshTitle;
+
+            const offlineHeader = document.getElementById('offlineSectionTitle');
+            if (offlineHeader) offlineHeader.textContent = t.offlineHeader;
 
             document.querySelectorAll('.label-temp').forEach(el => el.textContent = t.temperature);
             document.querySelectorAll('.label-hum').forEach(el => el.textContent = t.humidity);
@@ -224,11 +249,20 @@
 
         function updateCards(sensors) {
             const t = I18N[currentLang] || I18N.ca;
+            const onlineGrid = document.getElementById('onlineGrid');
+            const offlineGrid = document.getElementById('offlineGrid');
+            const offlineSection = document.getElementById('offlineSection');
 
             sensors.forEach(sensor => {
                 const card = document.querySelector(`[data-sensor-id="${sensor.sensor_id}"]`) ||
                              document.querySelector(`[data-sensor="${sensor.sensor_id}"]`);
                 if (!card) return;
+
+                // Move card to online grid (top) or offline grid (bottom)
+                const targetGrid = sensor.is_online ? onlineGrid : offlineGrid;
+                if (targetGrid && card.parentElement !== targetGrid) {
+                    targetGrid.appendChild(card);
+                }
 
                 // Update text fields
                 const nameEl = card.querySelector('[data-field="sensorName"]');
@@ -247,7 +281,7 @@
                 if (timeEl) timeEl.textContent = sensor.time;
                 if (timeAgo) timeAgo.textContent = sensor.relative_time;
 
-                // Update status
+                // Update status classes
                 card.classList.toggle('card-offline', !sensor.is_online);
                 if (statusBar) {
                     statusBar.classList.toggle('online', sensor.is_online);
@@ -277,6 +311,11 @@
                 card.classList.add('card-updated');
                 setTimeout(() => card.classList.remove('card-updated'), 500);
             });
+
+            // Toggle visibility of offline section
+            if (offlineSection && offlineGrid) {
+                offlineSection.classList.toggle('hidden', offlineGrid.children.length === 0);
+            }
         }
 
         function updateStatusBadge(online, total) {
