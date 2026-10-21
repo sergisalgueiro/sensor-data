@@ -50,20 +50,6 @@ TRANSLATIONS = {
             'bathroom': 'Bathroom',
             'garage': 'Garage',
         }
-    },
-    'es': {
-        'just_now': 'ahora mismo',
-        'm_ago': 'hace {m}m',
-        'h_ago': 'hace {h}h',
-        'd_ago': 'hace {d}d',
-        'sensors': {
-            'room': 'Habitación',
-            'living': 'Salón',
-            'terrace': 'Terraza',
-            'kitchen': 'Cocina',
-            'bathroom': 'Baño',
-            'garage': 'Garaje',
-        }
     }
 }
 
