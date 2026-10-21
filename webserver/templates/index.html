@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ca">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sensor Dashboard</title>
+    <title id="pageTitle">Tauler de Sensors</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,21 +20,27 @@
                     <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
                     </svg>
-                    Sensor Dashboard
+                    <span id="titleText">Tauler de Sensors</span>
                 </h1>
-                <p class="subtitle">Real-time environment monitoring</p>
+                <p class="subtitle" id="subtitleText">Monitoratge ambiental en temps real</p>
             </div>
             <div class="header-right">
-                <button class="refresh-btn" id="refreshBtn" onclick="refreshNow()" title="Refresh now">
+                <div class="lang-switch" role="group" aria-label="Selecciona l'idioma">
+                    <button type="button" class="lang-btn active" data-lang="ca" onclick="changeLanguage('ca')" title="Català">CA</button>
+                    <button type="button" class="lang-btn" data-lang="en" onclick="changeLanguage('en')" title="English">EN</button>
+                    <button type="button" class="lang-btn" data-lang="es" onclick="changeLanguage('es')" title="Español">ES</button>
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshNow()" title="Actualitzar ara">
                     <svg class="refresh-icon" id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="23 4 23 10 17 10"/>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                     </svg>
                     <span id="refreshTimer">30</span>
                 </button>
-                <div class="status-badge {{ 'all-online' if online_count == total_count else 'partial' }}">
+                <div class="status-badge {{ 'all-online' if online_count == total_count else 'partial' }}" id="statusBadge">
                     <span class="status-dot"></span>
-                    <span>{{ online_count }}/{{ total_count }} online</span>
+                    <span id="statusBadgeText">{{ online_count }}/{{ total_count }} en línia</span>
                 </div>
             </div>
         </header>
@@ -42,26 +48,26 @@
         <main class="main">
             <div class="sensor-grid" id="sensorGrid">
                 {% for data in sensor_data %}
-                <div class="sensor-card {{ 'card-offline' if not data.is_online }}" data-sensor="{{ data.sensor }}">
+                <div class="sensor-card {{ 'card-offline' if not data.is_online }}" data-sensor-id="{{ data.sensor_id }}" data-sensor="{{ data.sensor_id }}">
                     <div class="card-status-bar {{ 'online' if data.is_online else 'offline' }}"></div>
 
                     <div class="card-header">
                         <div class="sensor-identity">
                             <span class="sensor-icon">
-                                {% if data.sensor.lower() == 'room' %}🛏️
-                                {% elif data.sensor.lower() == 'living' %}🛋️
-                                {% elif data.sensor.lower() == 'terrace' %}☀️
-                                {% elif data.sensor.lower() == 'kitchen' %}🍳
-                                {% elif data.sensor.lower() == 'bathroom' %}🚿
-                                {% elif data.sensor.lower() == 'garage' %}🚗
+                                {% if data.sensor_id == 'room' %}🛏️
+                                {% elif data.sensor_id == 'living' %}🛋️
+                                {% elif data.sensor_id == 'terrace' %}☀️
+                                {% elif data.sensor_id == 'kitchen' %}🍳
+                                {% elif data.sensor_id == 'bathroom' %}🚿
+                                {% elif data.sensor_id == 'garage' %}🚗
                                 {% else %}📡
                                 {% endif %}
                             </span>
                             <div>
-                                <h3 class="sensor-name">{{ data.sensor }}</h3>
+                                <h3 class="sensor-name" data-field="sensorName">{{ data.sensor }}</h3>
                                 <span class="sensor-status {{ 'online' if data.is_online else 'offline' }}">
                                     <span class="status-indicator"></span>
-                                    {{ 'Online' if data.is_online else 'Offline' }}
+                                    <span class="status-text">{{ 'En línia' if data.is_online else 'Fora de línia' }}</span>
                                 </span>
                             </div>
                         </div>
@@ -76,7 +82,7 @@
                                 <span class="unit">°C</span>
                                 {% endif %}
                             </div>
-                            <span class="reading-label">Temperature</span>
+                            <span class="reading-label label-temp">Temperatura</span>
                         </div>
 
                         <div class="divider"></div>
@@ -103,7 +109,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <span class="reading-label">Humidity</span>
+                            <span class="reading-label label-hum">Humitat</span>
                         </div>
                     </div>
 
@@ -131,10 +137,73 @@
     </div>
 
     <script>
+        const I18N = {
+            ca: {
+                pageTitle: "Tauler de Sensors",
+                title: "Tauler de Sensors",
+                subtitle: "Monitoratge ambiental en temps real",
+                onlineText: "en línia",
+                statusOnline: "En línia",
+                statusOffline: "Fora de línia",
+                temperature: "Temperatura",
+                humidity: "Humitat",
+                refreshTitle: "Actualitzar ara"
+            },
+            en: {
+                pageTitle: "Sensor Dashboard",
+                title: "Sensor Dashboard",
+                subtitle: "Real-time environment monitoring",
+                onlineText: "online",
+                statusOnline: "Online",
+                statusOffline: "Offline",
+                temperature: "Temperature",
+                humidity: "Humidity",
+                refreshTitle: "Refresh now"
+            },
+            es: {
+                pageTitle: "Panel de Sensores",
+                title: "Panel de Sensores",
+                subtitle: "Monitorización ambiental en tiempo real",
+                onlineText: "en línea",
+                statusOnline: "En línea",
+                statusOffline: "Desconectado",
+                temperature: "Temperatura",
+                humidity: "Humedad",
+                refreshTitle: "Actualizar ahora"
+            }
+        };
+
         const REFRESH_INTERVAL = 30;
         let countdown = REFRESH_INTERVAL;
         let timerEl = document.getElementById('refreshTimer');
         let refreshIcon = document.getElementById('refreshIcon');
+
+        // Catalan is the default option
+        let currentLang = localStorage.getItem('sensor_lang') || 'ca';
+
+        function applyI18nStaticTexts() {
+            const t = I18N[currentLang] || I18N.ca;
+            document.documentElement.lang = currentLang;
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('titleText').textContent = t.title;
+            document.getElementById('subtitleText').textContent = t.subtitle;
+            document.getElementById('refreshBtn').title = t.refreshTitle;
+
+            document.querySelectorAll('.label-temp').forEach(el => el.textContent = t.temperature);
+            document.querySelectorAll('.label-hum').forEach(el => el.textContent = t.humidity);
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+            });
+        }
+
+        function changeLanguage(lang) {
+            if (!I18N[lang]) return;
+            currentLang = lang;
+            localStorage.setItem('sensor_lang', lang);
+            applyI18nStaticTexts();
+            refreshData();
+        }
 
         // Countdown timer
         setInterval(() => {
@@ -154,7 +223,7 @@
         async function refreshData() {
             refreshIcon.classList.add('spinning');
             try {
-                const res = await fetch('/api/sensors');
+                const res = await fetch(`/api/sensors?lang=${currentLang}`);
                 const data = await res.json();
                 updateCards(data.sensors);
                 updateStatusBadge(data.online_count, data.total_count);
@@ -166,20 +235,25 @@
         }
 
         function updateCards(sensors) {
+            const t = I18N[currentLang] || I18N.ca;
+
             sensors.forEach(sensor => {
-                const card = document.querySelector(`[data-sensor="${sensor.sensor}"]`);
+                const card = document.querySelector(`[data-sensor-id="${sensor.sensor_id}"]`) ||
+                             document.querySelector(`[data-sensor="${sensor.sensor_id}"]`);
                 if (!card) return;
 
-                // Update values
+                // Update text fields
+                const nameEl = card.querySelector('[data-field="sensorName"]');
                 const tempEl = card.querySelector('[data-field="temperature"]');
                 const humEl = card.querySelector('[data-field="humidity"]');
                 const timeEl = card.querySelector('[data-field="time"]');
                 const timeAgo = card.querySelector('.time-ago');
                 const statusBar = card.querySelector('.card-status-bar');
                 const statusBadge = card.querySelector('.sensor-status');
-                const statusIndicator = card.querySelector('.status-indicator');
+                const statusText = card.querySelector('.status-text');
                 const readingValue = card.querySelector('.reading-value');
 
+                if (nameEl) nameEl.textContent = sensor.sensor;
                 if (tempEl) tempEl.textContent = sensor.temperature;
                 if (humEl) humEl.textContent = sensor.humidity;
                 if (timeEl) timeEl.textContent = sensor.time;
@@ -194,10 +268,12 @@
                 if (statusBadge) {
                     statusBadge.classList.toggle('online', sensor.is_online);
                     statusBadge.classList.toggle('offline', !sensor.is_online);
-                    statusBadge.innerHTML = `<span class="status-indicator"></span>${sensor.is_online ? 'Online' : 'Offline'}`;
+                }
+                if (statusText) {
+                    statusText.textContent = sensor.is_online ? t.statusOnline : t.statusOffline;
                 }
 
-                // Update temperature class
+                // Update temperature styling
                 if (readingValue) {
                     readingValue.className = 'reading-value ' + sensor.temp_class;
                 }
@@ -216,13 +292,20 @@
         }
 
         function updateStatusBadge(online, total) {
-            const badge = document.querySelector('.status-badge');
+            const t = I18N[currentLang] || I18N.ca;
+            const badge = document.getElementById('statusBadge');
+            const badgeText = document.getElementById('statusBadgeText');
             if (badge) {
                 badge.classList.toggle('all-online', online === total);
                 badge.classList.toggle('partial', online !== total);
-                badge.querySelector('span:last-child').textContent = `${online}/${total} online`;
+            }
+            if (badgeText) {
+                badgeText.textContent = `${online}/${total} ${t.onlineText}`;
             }
         }
+
+        // Initial setup
+        applyI18nStaticTexts();
 
         // Stagger card entrance animations
         document.querySelectorAll('.sensor-card').forEach((card, i) => {

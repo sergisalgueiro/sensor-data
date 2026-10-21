@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 import redis
 import os
 import datetime
@@ -12,7 +12,7 @@ load_dotenv()
 # Configuration
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT")
-LOCAL_TIMEZONE = pytz.timezone('Europe/Madrid')  # Adjust to your timezone
+LOCAL_TIMEZONE = pytz.timezone('Europe/Madrid')  # Europe/Madrid is the local timezone
 STALE_THRESHOLD_SECONDS = 3600  # Consider sensor stale after 1 hour
 
 app = Flask(__name__)
@@ -21,20 +21,67 @@ metrics = PrometheusMetrics(app)
 # Configure Redis
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
+# Multi-language translations dictionary (Catalan default)
+TRANSLATIONS = {
+    'ca': {
+        'just_now': 'ara mateix',
+        'm_ago': 'fa {m}m',
+        'h_ago': 'fa {h}h',
+        'd_ago': 'fa {d}d',
+        'sensors': {
+            'room': 'Habitació',
+            'living': "Sala d'estar",
+            'terrace': 'Terrassa',
+            'kitchen': 'Cuina',
+            'bathroom': 'Bany',
+            'garage': 'Garatge',
+        }
+    },
+    'en': {
+        'just_now': 'just now',
+        'm_ago': '{m}m ago',
+        'h_ago': '{h}h ago',
+        'd_ago': '{d}d ago',
+        'sensors': {
+            'room': 'Room',
+            'living': 'Living Room',
+            'terrace': 'Terrace',
+            'kitchen': 'Kitchen',
+            'bathroom': 'Bathroom',
+            'garage': 'Garage',
+        }
+    },
+    'es': {
+        'just_now': 'ahora mismo',
+        'm_ago': 'hace {m}m',
+        'h_ago': 'hace {h}h',
+        'd_ago': 'hace {d}d',
+        'sensors': {
+            'room': 'Habitación',
+            'living': 'Salón',
+            'terrace': 'Terraza',
+            'kitchen': 'Cocina',
+            'bathroom': 'Baño',
+            'garage': 'Garaje',
+        }
+    }
+}
 
-def _relative_time(seconds):
-    """Convert elapsed seconds to a human-readable relative time string."""
+
+def _relative_time(seconds, lang='ca'):
+    """Convert elapsed seconds to a human-readable relative time string in selected language."""
+    t = TRANSLATIONS.get(lang, TRANSLATIONS['ca'])
     if seconds < 60:
-        return "just now"
+        return t['just_now']
     elif seconds < 3600:
         m = int(seconds // 60)
-        return f"{m}m ago"
+        return t['m_ago'].format(m=m)
     elif seconds < 86400:
         h = int(seconds // 3600)
-        return f"{h}h ago"
+        return t['h_ago'].format(h=h)
     else:
         d = int(seconds // 86400)
-        return f"{d}d ago"
+        return t['d_ago'].format(d=d)
 
 
 def _temp_class(value):
@@ -55,12 +102,13 @@ def _temp_class(value):
         return "temp-hot"
 
 
-def format_data():
+def format_data(lang='ca'):
     """
-    Fetches and formats data from Redis for display.
+    Fetches and formats data from Redis for display. Default language is Catalan ('ca').
     """
     formatted_data = []
     now = datetime.datetime.now(tz=pytz.utc)
+    t = TRANSLATIONS.get(lang, TRANSLATIONS['ca'])
 
     for key in redis_client.keys("temp_hum_sensor_*"):
         # Fetch the value from Redis
@@ -75,8 +123,11 @@ def format_data():
         age_seconds = (now - timestamp).total_seconds()
         is_stale = age_seconds > STALE_THRESHOLD_SECONDS
 
-        # sensor is the key without the prefix
-        sensor = key.decode().split("_")[-1]
+        # Raw sensor key identifier (e.g. 'room', 'living', 'terrace')
+        sensor_id = key.decode().split("_")[-1].lower()
+
+        # Localized sensor display name (defaults to capitalized ID)
+        sensor_name = t['sensors'].get(sensor_id, sensor_id.capitalize())
 
         # Parse numeric values, handle NaN gracefully
         try:
@@ -94,9 +145,10 @@ def format_data():
 
         # Format the data with units
         formatted_data.append({
-            "sensor": sensor.capitalize(),
+            "sensor_id": sensor_id,
+            "sensor": sensor_name,
             "time": local_time,
-            "relative_time": _relative_time(age_seconds),
+            "relative_time": _relative_time(age_seconds, lang=lang),
             "temperature": f"{temp_val:.1f}" if temp_valid else "—",
             "humidity": f"{hum_val:.1f}" if hum_valid else "—",
             "temp_value": temp_val if temp_valid else None,
@@ -113,23 +165,30 @@ def format_data():
 
 @app.route('/')
 def index():
-    # Fetch all keys (topics) matching temp_hum_sensor_* and their latest values
-    sensor_data = format_data()
+    lang = request.args.get('lang', 'ca')
+    if lang not in TRANSLATIONS:
+        lang = 'ca'
+    sensor_data = format_data(lang=lang)
     online_count = sum(1 for s in sensor_data if s['is_online'])
     return render_template('index.html',
                            sensor_data=sensor_data,
                            online_count=online_count,
-                           total_count=len(sensor_data))
+                           total_count=len(sensor_data),
+                           current_lang=lang)
 
 
 @app.route('/api/sensors')
 def api_sensors():
-    """JSON API endpoint for auto-refresh."""
-    sensor_data = format_data()
+    """JSON API endpoint for auto-refresh, defaults to Catalan."""
+    lang = request.args.get('lang', 'ca')
+    if lang not in TRANSLATIONS:
+        lang = 'ca'
+    sensor_data = format_data(lang=lang)
     return jsonify({
         "sensors": sensor_data,
         "online_count": sum(1 for s in sensor_data if s['is_online']),
         "total_count": len(sensor_data),
+        "lang": lang
     })
 
 
